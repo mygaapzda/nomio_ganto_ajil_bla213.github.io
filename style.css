@@ -506,4 +506,18 @@ td {
     .actions-row .btn {
         width: 100% !important;
     }
+
+    /* Fixed mobile dropdown */
+    .custom-dropdown-list {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 90vw;
+        max-width: 320px;
+        max-height: 50vh;
+        margin-top: 0;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.5), 0 0 0 2000px rgba(0,0,0,0.6);
+        border-radius: 12px;
+    }
 }
