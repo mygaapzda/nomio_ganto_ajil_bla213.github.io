@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Бараа Материалын Бүртгэл - Inventory Management</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-theme">
+    <div id="app">
+
+        <nav class="sidebar">
+            <div class="logo">
+                <i data-lucide="package"></i>
+                <span>InventoryPRO</span>
+            </div>
+            <ul class="nav-links">
+                <li class="active" data-page="dashboard">
+                    <i data-lucide="layout-dashboard"></i>
+                    <span>Хяналтын самбар</span>
+                </li>
+                <li data-page="daily-log">
+                    <i data-lucide="plus-circle"></i>
+                    <span>Өдөр тутмын бүртгэл</span>
+                </li>
+                <li data-page="inventory">
+                    <i data-lucide="database"></i>
+                    <span>Бараа материал</span>
+                </li>
+                <li data-page="items">
+                    <i data-lucide="list-plus"></i>
+                    <span>Барааны бүртгэл</span>
+                </li>
+                <li data-page="transfer">
+                    <i data-lucide="move-right"></i>
+                    <span>Бараа зөөлт</span>
+                </li>
+                <li data-page="history">
+                    <i data-lucide="history"></i>
+                    <span>Түүх</span>
+                </li>
+            </ul>
+        </nav>
+
+
+        <main class="content">
+            <header class="top-bar">
+                <h1 id="page-title">Хяналтын самбар</h1>
+                <div class="user-info">
+                    <span id="current-date"></span>
+                </div>
+            </header>
+
+            <section id="page-content">
+
+            </section>
+        </main>
+    </div>
+
+
+    <div id="login-overlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-color); z-index:9999; display:flex; align-items:center; justify-content:center;">
+        <div class="form-container" style="width:100%; max-width:400px; text-align:center;">
+            <div class="logo" style="justify-content:center; margin-bottom:20px;">
+                <i data-lucide="shield-check"></i>
+                <span>Нэвтрэх</span>
+            </div>
+            <div class="form-group">
+                <input type="password" id="login-pw" class="form-control" placeholder="Нууц үг оруулна уу" style="text-align:center;">
+            </div>
+            <button class="btn" onclick="checkPassword()">Нэвтрэх</button>
+            <p id="login-error" style="color:var(--danger); margin-top:10px; display:none;">Нууц үг буруу байна!</p>
+        </div>
+    </div>
+
+
+    <div id="modal-container" class="modal-hidden"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
