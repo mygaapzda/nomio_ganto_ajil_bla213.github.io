@@ -64,8 +64,17 @@ function exportData() {
     URL.revokeObjectURL(url);
 }
 
-function importData(file) {
+function importData(inputEl) {
+    const file = inputEl.files ? inputEl.files[0] : null;
     if (!file) return;
+
+    const pwd = prompt('Мэдээлэл сэргээх нууц үгээ оруулна уу:');
+    if (pwd !== 'iloveboljmor2004') {
+        alert('Нууц үг буруу байна!');
+        inputEl.value = ''; // Reset input to allow selecting the same file again
+        return;
+    }
+
     const reader = new FileReader();
     reader.onload = (e) => {
         try {
@@ -79,9 +88,11 @@ function importData(file) {
                 location.reload();
             } else {
                 alert('Файлын формат буруу байна!');
+                inputEl.value = '';
             }
         } catch (err) {
             alert('Файлыг уншихад алдаа гарлаа!');
+            inputEl.value = '';
         }
     };
     reader.readAsText(file);
@@ -207,6 +218,7 @@ function renderDashboard(container) {
                             const today = new Date().toISOString().split('T')[0];
                             const todaySales = state.transactions.filter(t => t.date === today && t.type === 'sale');
                             return PAYMENT_METHODS.map(pm => {
+                                if (pm.id === 'director') return '';
                                 const total = todaySales.filter(s => s.paymentMethod === pm.id).reduce((sum, s) => sum + (s.price * s.quantity), 0);
                                 if (total === 0) return '';
                                 return `<div style="display:flex; justify-content:space-between;"><span>${pm.name}:</span> <strong>${total.toLocaleString()}₮</strong></div>`;
@@ -355,11 +367,18 @@ function renderDailyLog(container) {
 
         function updateRowCalculations() {
             const item = state.items.find(i => i.id === itemHidden.value);
+            const paymentSelect = tr.querySelector('.entry-payment');
+            const typeSelect = tr.querySelector('.entry-type');
             if (item) {
                 const qty = parseInt(qtyInput.value) || 0;
                 itemInput.value = item.name;
-                priceInput.value = item.price.toLocaleString() + '₮';
-                totalInput.value = (item.price * qty).toLocaleString() + '₮';
+                if (typeSelect.value === 'sale' && paymentSelect && paymentSelect.value === 'director') {
+                    priceInput.value = '0₮';
+                    totalInput.value = '0₮';
+                } else {
+                    priceInput.value = item.price.toLocaleString() + '₮';
+                    totalInput.value = (item.price * qty).toLocaleString() + '₮';
+                }
             } else {
                 priceInput.value = '0₮';
                 totalInput.value = '0₮';
@@ -431,7 +450,10 @@ function renderDailyLog(container) {
         typeSelect.addEventListener('change', () => {
             paymentSelect.disabled = typeSelect.value !== 'sale';
             if (paymentSelect.disabled) paymentSelect.value = "";
+            updateRowCalculations();
         });
+
+        paymentSelect.addEventListener('change', updateRowCalculations);
 
         tbody.appendChild(tr);
         lucide.createIcons();
@@ -646,7 +668,7 @@ function renderHistory(container) {
                 </button>
                 <label class="btn btn-secondary" style="width: auto; cursor: pointer; margin: 0;">
                     <i data-lucide="upload"></i> Файлаас сэргээх
-                    <input type="file" style="display: none;" onchange="importData(this.files[0])">
+                    <input type="file" style="display: none;" onchange="importData(this)">
                 </label>
 
             </div>
@@ -655,7 +677,7 @@ function renderHistory(container) {
         <div class="animate-fade-in">
             ${sortedDates.map(date => {
                 const txs = groups[date];
-                const daySales = txs.filter(t => t.type === 'sale').reduce((sum, t) => sum + (t.price * t.quantity), 0);
+                const daySales = txs.filter(t => t.type === 'sale' && t.paymentMethod !== 'director').reduce((sum, t) => sum + (t.price * t.quantity), 0);
                 const dayRestock = txs.filter(t => t.type === 'restock').reduce((sum, t) => sum + (t.price * t.quantity), 0);
 
                 return `
@@ -665,6 +687,7 @@ function renderHistory(container) {
                                 <h3><i data-lucide="calendar" style="width: 16px; margin-right: 8px;"></i> ${date}</h3>
                                 <div class="daily-summaries" style="margin-top: 8px; font-size: 0.85rem;">
                                     ${PAYMENT_METHODS.map(pm => {
+                                        if (pm.id === 'director') return '';
                                         const pmTotal = txs.filter(t => t.type === 'sale' && t.paymentMethod === pm.id).reduce((sum, t) => sum + (t.price * t.quantity), 0);
                                         if (pmTotal === 0) return '';
                                         return `<span style="margin-right: 12px; color: var(--text-secondary);">${pm.name}: <strong>${pmTotal.toLocaleString()}₮</strong></span>`;
@@ -731,8 +754,8 @@ function renderHistory(container) {
                                                 <td>${toText}</td>
                                                 <td>${paymentName}</td>
                                                 <td>${tx.quantity}</td>
-                                                <td>${tx.price.toLocaleString()}₮</td>
-                                                <td>${(tx.price * tx.quantity).toLocaleString()}₮</td>
+                                                <td>${tx.paymentMethod === 'director' ? '0₮' : tx.price.toLocaleString() + '₮'}</td>
+                                                <td>${tx.paymentMethod === 'director' ? '0₮' : (tx.price * tx.quantity).toLocaleString() + '₮'}</td>
                                                 <td style="color: ${typeColor}; font-weight: 500;">${typeText}</td>
                                             </tr>
                                         `;
