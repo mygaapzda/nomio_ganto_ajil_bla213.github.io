@@ -46,14 +46,7 @@ function saveState() {
     localStorage.setItem('inv_tx', JSON.stringify(state.transactions));
 }
 
-function resetData() {
-    if (confirm('Бүх өгөгдлийг устгахдаа итгэлтэй байна уу?\nБүх барааны үлдэгдэл болон түүх устах болно.')) {
-        localStorage.removeItem('inv_items');
-        localStorage.removeItem('inv_data');
-        localStorage.removeItem('inv_tx');
-        location.reload();
-    }
-}
+
 
 function exportData() {
     const data = {
@@ -221,10 +214,7 @@ function renderDashboard(container) {
                         })()}
                     </div>
                 </div>
-                <div class="card" style="display: flex; flex-direction: column; justify-content: center; align-items: center; border-style: dashed; cursor: pointer;" onclick="resetData()">
-                <i data-lucide="refresh-ccw" style="color: var(--danger); margin-bottom: 8px;"></i>
-                <span style="color: var(--danger); font-weight: 600;">Өгөгдөл цэвэрлэх</span>
-            </div>
+
         </div>
         
         <h2 style="margin-bottom: 16px;">Сүүлийн гүйлгээнүүд</h2>
@@ -658,9 +648,7 @@ function renderHistory(container) {
                     <i data-lucide="upload"></i> Файлаас сэргээх
                     <input type="file" style="display: none;" onchange="importData(this.files[0])">
                 </label>
-                <button class="btn btn-secondary" onclick="resetData()" style="width: auto; color: var(--danger); border-color: var(--danger);">
-                    <i data-lucide="trash-2"></i> Бүх өгөгдлийг цэвэрлэх
-                </button>
+
             </div>
         </div>
         
