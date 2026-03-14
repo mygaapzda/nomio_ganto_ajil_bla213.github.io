@@ -381,3 +381,129 @@ td {
     gap: 12px;
     margin-top: 24px;
 }
+
+/* Mobile Responsive UI */
+@media (max-width: 768px) {
+    #app {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        height: auto;
+        padding: 16px 8px;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        z-index: 100;
+        background-color: var(--sidebar-bg);
+    }
+    
+    .logo {
+        margin-bottom: 12px;
+        justify-content: center;
+    }
+
+    .nav-links {
+        display: flex;
+        overflow-x: auto;
+        gap: 8px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding-bottom: 4px;
+    }
+    .nav-links::-webkit-scrollbar {
+        display: none;
+    }
+
+    .nav-links li {
+        flex-direction: column;
+        justify-content: center;
+        padding: 10px 12px;
+        border-left: none;
+        border-bottom: 3px solid transparent;
+        font-size: 0.8rem;
+        flex-shrink: 0;
+        text-align: center;
+        border-radius: 8px;
+        gap: 6px;
+    }
+
+    .nav-links li i {
+        margin-right: 0 !important;
+        width: 20px;
+        height: 20px;
+    }
+
+    .nav-links li.active {
+        border-left-color: transparent;
+        border-bottom-color: var(--accent-color);
+        background-color: rgba(88, 166, 255, 0.1);
+    }
+    
+    .nav-links li span {
+        display: block;
+        margin-top: 2px;
+    }
+
+    .content {
+        padding: 16px;
+    }
+
+    .top-bar {
+        margin-bottom: 20px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin-bottom: 16px;
+        width: 100%;
+    }
+    
+    table {
+        min-width: 600px;
+    }
+
+    /* Form adjustments */
+    #login-overlay .form-container {
+        width: 90%;
+        padding: 24px;
+    }
+
+    form > div[style*="grid"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    #add-item-form {
+        grid-template-columns: 1fr !important;
+        gap: 12px;
+    }
+    
+    .history-date-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .daily-summaries {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .actions-row {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .actions-row .btn {
+        width: 100% !important;
+    }
+}
