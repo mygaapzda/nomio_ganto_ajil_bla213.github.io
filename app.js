@@ -6,7 +6,8 @@ const LOCATIONS = [
 const PAYMENT_METHODS = [
     { id: 'pos', name: 'POS' },
     { id: 'bank', name: 'Дансаар' },
-    { id: 'director', name: 'Захирал' }
+    { id: 'director', name: 'Захирал' },
+    { id: 'gift', name: 'Бэлэг' }
 ];
 
 const DEFAULT_ITEMS = [
@@ -218,7 +219,7 @@ function renderDashboard(container) {
                             const today = new Date().toISOString().split('T')[0];
                             const todaySales = state.transactions.filter(t => t.date === today && t.type === 'sale');
                             return PAYMENT_METHODS.map(pm => {
-                                if (pm.id === 'director') return '';
+                                if (pm.id === 'director' || pm.id === 'gift') return '';
                                 const total = todaySales.filter(s => s.paymentMethod === pm.id).reduce((sum, s) => sum + (s.price * s.quantity), 0);
                                 if (total === 0) return '';
                                 return `<div style="display:flex; justify-content:space-between;"><span>${pm.name}:</span> <strong>${total.toLocaleString()}₮</strong></div>`;
@@ -298,6 +299,24 @@ function renderDailyLog(container) {
                 </table>
             </div>
 
+            <div id="promotions-container" class="animate-fade-in" style="display:none; background: var(--bg-hover); padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--border-color);">
+                <h4 style="margin-top: 0; margin-bottom: 12px; color: var(--accent-color); display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="gift" style="width: 20px;"></i> Урамшуулал
+                </h4>
+                <div id="promo-messages" style="margin-bottom: 12px; font-size: 0.95rem; font-weight: 500; color: var(--success); line-height: 1.5;"></div>
+                <div id="gift-selection" style="display:none; flex-direction: column; gap: 8px; margin-top: 12px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+                    <span style="font-weight:600; color:var(--accent-color)" id="promo-gift-title">Сонгох боломжтой бэлэг: 0 ширхэг</span>
+                    <div style="display:flex; align-items:center; gap: 16px;">
+                        <label style="display:flex; align-items:center; gap: 8px; font-weight: 500;">
+                            Лаа: <input type="number" id="gift-qty-candle" class="form-control" style="width:70px; margin:0; padding: 4px;" value="0" min="0">
+                        </label>
+                        <label style="display:flex; align-items:center; gap: 8px; font-weight: 500;">
+                            Халуун сав: <input type="number" id="gift-qty-thermos" class="form-control" style="width:70px; margin:0; padding: 4px;" value="0" min="0">
+                        </label>
+                    </div>
+                </div>
+            </div>
+
             <div class="actions-row">
                 <button id="add-row-btn" class="btn btn-secondary" style="width: auto;">
                     <i data-lucide="plus"></i> Мөр нэмэх
@@ -352,7 +371,14 @@ function renderDailyLog(container) {
                 </select>
             </td>
             <td><input type="number" class="entry-qty" value="1" min="1"></td>
-            <td><input type="text" class="entry-price" readonly value="0₮"></td>
+            <td>
+                <input type="text" class="entry-price" readonly value="0₮">
+                <select class="entry-price-select form-control" style="display:none; padding: 4px; height: 32px;">
+                    <option value="15000">15,000₮</option>
+                    <option value="20000" selected>20,000₮</option>
+                    <option value="25000">25,000₮</option>
+                </select>
+            </td>
             <td><input type="text" class="entry-total" readonly value="0₮"></td>
             <td><button class="remove-row" style="background:none; border:none; color:var(--danger); cursor:pointer;"><i data-lucide="trash-2"></i></button></td>
         `;
@@ -369,20 +395,40 @@ function renderDailyLog(container) {
             const item = state.items.find(i => i.id === itemHidden.value);
             const paymentSelect = tr.querySelector('.entry-payment');
             const typeSelect = tr.querySelector('.entry-type');
+            const priceSelect = tr.querySelector('.entry-price-select');
             if (item) {
                 const qty = parseInt(qtyInput.value) || 0;
                 itemInput.value = item.name;
-                if (typeSelect.value === 'sale' && paymentSelect && paymentSelect.value === 'director') {
-                    priceInput.value = '0₮';
-                    totalInput.value = '0₮';
+                
+                let currentItemPrice = item.price;
+                if (item.id === 'book') {
+                    priceInput.style.display = 'none';
+                    priceSelect.style.display = 'block';
+                    currentItemPrice = parseInt(priceSelect.value) || 20000;
                 } else {
+                    priceInput.style.display = 'block';
+                    priceSelect.style.display = 'none';
                     priceInput.value = item.price.toLocaleString() + '₮';
-                    totalInput.value = (item.price * qty).toLocaleString() + '₮';
+                }
+
+                if (typeSelect.value === 'sale' && (paymentSelect && (paymentSelect.value === 'director' || paymentSelect.value === 'gift'))) {
+                    totalInput.value = '0₮';
+                    tr.setAttribute('data-base-total', '0');
+                    tr.setAttribute('data-eff-price', '0');
+                } else {
+                    totalInput.value = (currentItemPrice * qty).toLocaleString() + '₮';
+                    tr.setAttribute('data-base-total', (currentItemPrice * qty).toString());
+                    tr.setAttribute('data-eff-price', currentItemPrice.toString());
                 }
             } else {
+                priceInput.style.display = 'block';
+                priceSelect.style.display = 'none';
                 priceInput.value = '0₮';
                 totalInput.value = '0₮';
+                tr.setAttribute('data-base-total', '0');
+                tr.setAttribute('data-eff-price', '0');
             }
+            if (window.updatePromotions) window.updatePromotions();
         }
 
         function openDropdown() {
@@ -409,6 +455,7 @@ function renderDailyLog(container) {
         });
 
         qtyInput.addEventListener('input', updateRowCalculations);
+        tr.querySelector('.entry-price-select').addEventListener('change', updateRowCalculations);
 
 
         tr.querySelectorAll('.dropdown-item').forEach(item => {
@@ -442,6 +489,7 @@ function renderDailyLog(container) {
         removeBtn.addEventListener('click', () => {
             tr.remove();
             updateRowNumbers();
+            if (window.updatePromotions) window.updatePromotions();
         });
 
         const typeSelect = tr.querySelector('.entry-type');
@@ -466,6 +514,130 @@ function renderDailyLog(container) {
         });
     }
 
+    window.updatePromotions = () => {
+        let yarguiQty = 0;
+        let mealSetQty = 0;
+        let teaSetQty = 0;
+        const saleRows = [];
+        
+        Array.from(tbody.children).forEach(tr => {
+            const itemId = tr.querySelector('.entry-item-val').value;
+            const type = tr.querySelector('.entry-type').value;
+            const pm = tr.querySelector('.entry-payment').value;
+            const qty = parseInt(tr.querySelector('.entry-qty').value) || 0;
+            if (type === 'sale' && pm !== 'director' && pm !== 'gift' && itemId) {
+                saleRows.push(tr);
+                if (itemId === 'yargui') yarguiQty += qty;
+                if (itemId === 'meal-set') mealSetQty += qty;
+                if (itemId === 'tea-set') teaSetQty += qty;
+            }
+        });
+
+        const messages = [];
+        
+        Array.from(tbody.children).forEach(tr => {
+            const base = parseInt(tr.getAttribute('data-base-total')) || 0;
+            const effPrice = parseInt(tr.getAttribute('data-eff-price')) || 0;
+            tr.querySelector('.entry-total').value = base.toLocaleString() + '₮';
+            tr.setAttribute('data-final-total', base);
+            tr.setAttribute('data-final-price', effPrice);
+        });
+
+        if (yarguiQty >= 2) {
+            const discountedCount = Math.floor(yarguiQty / 2);
+            const yarguiItem = state.items.find(i => i.id === 'yargui');
+            if (yarguiItem) {
+                const discountValue = discountedCount * (yarguiItem.price * 0.2);
+                messages.push(`- Яргуй 20% хямдрал: -${discountValue.toLocaleString()}₮`);
+                
+                let remainingDiscount = discountValue;
+                for (let tr of saleRows) {
+                    if (tr.querySelector('.entry-item-val').value === 'yargui' && remainingDiscount > 0) {
+                        let base = parseInt(tr.getAttribute('data-final-total')) || 0;
+                        if (base >= remainingDiscount) {
+                            base -= remainingDiscount;
+                            remainingDiscount = 0;
+                        } else {
+                            remainingDiscount -= base;
+                            base = 0;
+                        }
+                        tr.querySelector('.entry-total').value = base.toLocaleString() + '₮';
+                        tr.setAttribute('data-final-total', base);
+                        const qty = parseInt(tr.querySelector('.entry-qty').value) || 1;
+                        tr.setAttribute('data-final-price', Math.floor(base / qty));
+                    }
+                }
+            }
+        }
+
+        if (mealSetQty >= 2 && teaSetQty >= 2) {
+            const discountedCount = Math.min(Math.floor(mealSetQty / 2), Math.floor(teaSetQty / 2));
+            const teaSetItem = state.items.find(i => i.id === 'tea-set');
+            if (teaSetItem && discountedCount > 0) {
+                const discountValue = discountedCount * (teaSetItem.price * 0.5);
+                messages.push(`- ${discountedCount} Цайны сэт 50% хямдрал: -${discountValue.toLocaleString()}₮`);
+                
+                let remainingDiscount = discountValue;
+                for (let tr of saleRows) {
+                    if (tr.querySelector('.entry-item-val').value === 'tea-set' && remainingDiscount > 0) {
+                        let base = parseInt(tr.getAttribute('data-final-total')) || 0;
+                        if (base >= remainingDiscount) {
+                            base -= remainingDiscount;
+                            remainingDiscount = 0;
+                        } else {
+                            remainingDiscount -= base;
+                            base = 0;
+                        }
+                        tr.querySelector('.entry-total').value = base.toLocaleString() + '₮';
+                        tr.setAttribute('data-final-total', base);
+                        const qty = parseInt(tr.querySelector('.entry-qty').value) || 1;
+                        tr.setAttribute('data-final-price', Math.floor(base / qty));
+                    }
+                }
+            }
+        }
+
+        const promoBox = document.getElementById('promotions-container');
+        const promoMsg = document.getElementById('promo-messages');
+        const giftSection = document.getElementById('gift-selection');
+        const giftTitle = document.getElementById('promo-gift-title');
+        const giftCandle = document.getElementById('gift-qty-candle');
+        const giftThermos = document.getElementById('gift-qty-thermos');
+
+        const totalGiftEligible = yarguiQty + mealSetQty + teaSetQty;
+        const maxGifts = totalGiftEligible;
+        
+        promoMsg.innerHTML = messages.length > 0 ? messages.join('<br>') : '';
+        let hasPromo = messages.length > 0 || maxGifts > 0;
+        promoBox.style.display = hasPromo ? 'block' : 'none';
+
+        if (maxGifts > 0) {
+            giftSection.style.display = 'flex';
+            giftTitle.innerText = `Сонгох боломжтой бэлэг: ${maxGifts} ширхэг`;
+            
+            const currentTotal = (parseInt(giftCandle.value) || 0) + (parseInt(giftThermos.value) || 0);
+            if (currentTotal > maxGifts) {
+                giftCandle.value = 0;
+                giftThermos.value = 0;
+            }
+            
+            [giftCandle, giftThermos].forEach(input => {
+                input.max = maxGifts;
+                input.oninput = () => {
+                   let c = parseInt(giftCandle.value) || 0;
+                   let t = parseInt(giftThermos.value) || 0;
+                   if (c + t > maxGifts) {
+                       input.value = input === giftCandle ? Math.max(0, maxGifts - t) : Math.max(0, maxGifts - c);
+                   }
+                };
+            });
+        } else {
+            giftSection.style.display = 'none';
+            if (giftCandle) giftCandle.value = 0;
+            if (giftThermos) giftThermos.value = 0;
+        }
+    };
+
     document.getElementById('add-row-btn').addEventListener('click', createRow);
 
     document.getElementById('save-bulk-btn').addEventListener('click', () => {
@@ -482,7 +654,8 @@ function renderDailyLog(container) {
 
                     if (locationId && itemId && qty > 0) {
                         const item = state.items.find(i => i.id === itemId);
-                        
+                        let finalPrice = parseInt(tr.getAttribute('data-final-price'));
+                        if (isNaN(finalPrice)) finalPrice = item.price;
 
                         if (type === 'sale') {
                             const currentStock = state.inventory[locationId][itemId] || 0;
@@ -500,10 +673,41 @@ function renderDailyLog(container) {
                             type,
                             paymentMethod: type === 'sale' ? paymentMethod : null,
                             quantity: qty,
-                            price: item.price
+                            price: finalPrice
                         });
                     }
         });
+
+        const giftCandle = parseInt(document.getElementById('gift-qty-candle').value) || 0;
+        const giftThermos = parseInt(document.getElementById('gift-qty-thermos').value) || 0;
+        
+        if ((giftCandle + giftThermos) > 0 && txsToSave.length > 0) {
+            const gifts = [];
+            if (giftCandle > 0) gifts.push({id: 'candle', qty: giftCandle});
+            if (giftThermos > 0) gifts.push({id: 'thermos', qty: giftThermos});
+            
+            const locationId = txsToSave[0].locationId;
+            
+            for (let g of gifts) {
+                const currentStock = state.inventory[locationId][g.id] || 0;
+                if (currentStock < g.qty) {
+                    const locName = LOCATIONS.find(l => l.id === locationId).name;
+                    error = `${locName} дээрх бэлэгний (${state.items.find(i=>i.id===g.id).name}) үлдэгдэл хүрэлцэхгүй байна! (Үлдэгдэл: ${currentStock})`;
+                    break;
+                } else {
+                    txsToSave.push({
+                        id: Date.now() + txsToSave.length + Math.random(),
+                        date,
+                        locationId,
+                        itemId: g.id,
+                        type: 'sale',
+                        paymentMethod: 'gift',
+                        quantity: g.qty,
+                        price: 0
+                    });
+                }
+            }
+        }
 
         if (error) {
             alert(error);
@@ -687,7 +891,7 @@ function renderHistory(container) {
                                 <h3><i data-lucide="calendar" style="width: 16px; margin-right: 8px;"></i> ${date}</h3>
                                 <div class="daily-summaries" style="margin-top: 8px; font-size: 0.85rem;">
                                     ${PAYMENT_METHODS.map(pm => {
-                                        if (pm.id === 'director') return '';
+                                        if (pm.id === 'director' || pm.id === 'gift') return '';
                                         const pmTotal = txs.filter(t => t.type === 'sale' && t.paymentMethod === pm.id).reduce((sum, t) => sum + (t.price * t.quantity), 0);
                                         if (pmTotal === 0) return '';
                                         return `<span style="margin-right: 12px; color: var(--text-secondary);">${pm.name}: <strong>${pmTotal.toLocaleString()}₮</strong></span>`;
@@ -754,8 +958,8 @@ function renderHistory(container) {
                                                 <td>${toText}</td>
                                                 <td>${paymentName}</td>
                                                 <td>${tx.quantity}</td>
-                                                <td>${tx.paymentMethod === 'director' ? '0₮' : tx.price.toLocaleString() + '₮'}</td>
-                                                <td>${tx.paymentMethod === 'director' ? '0₮' : (tx.price * tx.quantity).toLocaleString() + '₮'}</td>
+                                                <td>${(tx.paymentMethod === 'director' || tx.paymentMethod === 'gift') ? '0₮' : tx.price.toLocaleString() + '₮'}</td>
+                                                <td>${(tx.paymentMethod === 'director' || tx.paymentMethod === 'gift') ? '0₮' : (tx.price * tx.quantity).toLocaleString() + '₮'}</td>
                                                 <td style="color: ${typeColor}; font-weight: 500;">${typeText}</td>
                                             </tr>
                                         `;
