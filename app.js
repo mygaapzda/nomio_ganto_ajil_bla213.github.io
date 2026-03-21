@@ -1,6 +1,7 @@
 const LOCATIONS = [
     { id: 'shop', name: 'Дэлгүүр' },
-    { id: 'warehouse', name: 'Агуулах' }
+    { id: 'warehouse', name: 'Агуулах' },
+    { id: 'defect', name: 'Дипэкт' }
 ];
 
 const PAYMENT_METHODS = [
@@ -9,6 +10,7 @@ const PAYMENT_METHODS = [
     { id: 'qpay', name: 'Qpay' },
     { id: 'pocket', name: 'Pocket' },
     { id: 'cash', name: 'Бэлэн' },
+    { id: 'employee', name: 'Ажилчин' },
     { id: 'director', name: 'Захирал' },
     { id: 'gift', name: 'Бэлэг' }
 ];
@@ -32,17 +34,20 @@ let state = {
 };
 
 
-if (Object.keys(state.inventory).length === 0) {
-    LOCATIONS.forEach(loc => {
-        if (!state.inventory[loc.id]) state.inventory[loc.id] = {};
-        state.items.forEach(item => {
-            if (state.inventory[loc.id][item.id] === undefined) {
-                state.inventory[loc.id][item.id] = 0;
-            }
-        });
+let needsSave = false;
+LOCATIONS.forEach(loc => {
+    if (!state.inventory[loc.id]) {
+        state.inventory[loc.id] = {};
+        needsSave = true;
+    }
+    state.items.forEach(item => {
+        if (state.inventory[loc.id][item.id] === undefined) {
+            state.inventory[loc.id][item.id] = 0;
+            needsSave = true;
+        }
     });
-    saveState();
-}
+});
+if (needsSave) saveState();
 
 function saveState() {
     localStorage.setItem('inv_items', JSON.stringify(state.items));
@@ -219,15 +224,15 @@ function renderDashboard(container) {
                     <div class="card-title">Өнөөдрийн борлуулалт</div>
                     <div style="font-size: 0.9rem; margin-top: 8px;">
                         ${(() => {
-                            const today = new Date().toISOString().split('T')[0];
-                            const todaySales = state.transactions.filter(t => t.date === today && t.type === 'sale');
-                            return PAYMENT_METHODS.map(pm => {
-                                if (pm.id === 'director' || pm.id === 'gift') return '';
-                                const total = todaySales.filter(s => s.paymentMethod === pm.id).reduce((sum, s) => sum + (s.price * s.quantity), 0);
-                                if (total === 0) return '';
-                                return `<div style="display:flex; justify-content:space-between;"><span>${pm.name}:</span> <strong>${total.toLocaleString()}₮</strong></div>`;
-                            }).join('') || 'Борлуулалт байхгүй';
-                        })()}
+            const today = new Date().toISOString().split('T')[0];
+            const todaySales = state.transactions.filter(t => t.date === today && t.type === 'sale');
+            return PAYMENT_METHODS.map(pm => {
+                if (pm.id === 'director' || pm.id === 'gift') return '';
+                const total = todaySales.filter(s => s.paymentMethod === pm.id).reduce((sum, s) => sum + (s.price * s.quantity), 0);
+                if (total === 0) return '';
+                return `<div style="display:flex; justify-content:space-between;"><span>${pm.name}:</span> <strong>${total.toLocaleString()}₮</strong></div>`;
+            }).join('') || 'Борлуулалт байхгүй';
+        })()}
                     </div>
                 </div>
 
@@ -266,7 +271,7 @@ function renderDashboard(container) {
 
 function renderDailyLog(container) {
     const today = new Date().toISOString().split('T')[0];
-    
+
     container.innerHTML = `
         <div class="card animate-fade-in">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
@@ -290,7 +295,7 @@ function renderDailyLog(container) {
                             <th>Бараа (Товч: 1-7)</th>
                             <th style="width: 120px;">Төрөл</th>
                             <th style="width: 120px;">Төлбөр</th>
-                            <th style="width: 80px;">Тоо</th>
+                            <th style="width: 120px;">Тоо / Багц</th>
                             <th style="width: 100px;">Үнэ</th>
                             <th style="width: 100px;">Нийт</th>
                             <th style="width: 40px;"></th>
@@ -299,25 +304,28 @@ function renderDailyLog(container) {
                     <tbody id="bulk-tbody">
                         <!-- Rows will be added here -->
                     </tbody>
+                    <tfoot>
+                        <tr id="gift-row" style="border-top: 2px solid var(--border-color);">
+                            <td colspan="2" style="padding-top: 10px; padding-bottom: 10px;">
+                                <span style="display:flex; align-items:center; gap: 6px; color: var(--accent-color); font-weight: 600; white-space: nowrap;">
+                                    <i data-lucide="gift" style="width:16px;"></i> Бэлэг
+                                </span>
+                            </td>
+                            <td>
+                                <select id="gift-location" class="entry-select">${LOCATIONS.map(l=>`<option value="${l.id}">${l.name}</option>`).join('')}</select>
+                            </td>
+                            <td colspan="2"></td>
+                            <td>
+                                <div style="display:flex; flex-direction:column; gap:4px; font-size:0.85rem;">
+                                    <label style="display:flex; align-items:center; gap:4px;">Лаа: <input type="number" id="gift-qty-candle" class="entry-qty" style="width:52px;" value="0" min="0"></label>
+                                    <label style="display:flex; align-items:center; gap:4px;">Хал.сав: <input type="number" id="gift-qty-thermos" class="entry-qty" style="width:52px;" value="0" min="0"></label>
+                                    <label style="display:flex; align-items:center; gap:4px;">Ном: <input type="number" id="gift-qty-book" class="entry-qty" style="width:52px;" value="0" min="0"></label>
+                                </div>
+                            </td>
+                            <td colspan="3"></td>
+                        </tr>
+                    </tfoot>
                 </table>
-            </div>
-
-            <div id="promotions-container" class="animate-fade-in" style="display:none; background: var(--bg-hover); padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--border-color);">
-                <h4 style="margin-top: 0; margin-bottom: 12px; color: var(--accent-color); display: flex; align-items: center; gap: 8px;">
-                    <i data-lucide="gift" style="width: 20px;"></i> Урамшуулал
-                </h4>
-                <div id="promo-messages" style="margin-bottom: 12px; font-size: 0.95rem; font-weight: 500; color: var(--success); line-height: 1.5;"></div>
-                <div id="gift-selection" style="display:none; flex-direction: column; gap: 8px; margin-top: 12px; border-top: 1px solid var(--border-color); padding-top: 12px;">
-                    <span style="font-weight:600; color:var(--accent-color)" id="promo-gift-title">Сонгох боломжтой бэлэг: 0 ширхэг</span>
-                    <div style="display:flex; align-items:center; gap: 16px;">
-                        <label style="display:flex; align-items:center; gap: 8px; font-weight: 500;">
-                            Лаа: <input type="number" id="gift-qty-candle" class="form-control" style="width:70px; margin:0; padding: 4px;" value="0" min="0">
-                        </label>
-                        <label style="display:flex; align-items:center; gap: 8px; font-weight: 500;">
-                            Халуун сав: <input type="number" id="gift-qty-thermos" class="form-control" style="width:70px; margin:0; padding: 4px;" value="0" min="0">
-                        </label>
-                    </div>
-                </div>
             </div>
 
             <div class="actions-row">
@@ -332,7 +340,7 @@ function renderDailyLog(container) {
     `;
 
     const tbody = document.getElementById('bulk-tbody');
-    
+
     function createRow() {
 
         let lastLoc = "";
@@ -369,11 +377,27 @@ function renderDailyLog(container) {
                 </select>
             </td>
             <td>
-                <select class="entry-payment entry-select">
+                <select class="entry-payment entry-select" style="margin-bottom: 4px;">
                     ${PAYMENT_METHODS.map(pm => `<option value="${pm.id}">${pm.name}</option>`).join('')}
                 </select>
+                <select class="entry-employee entry-select" style="display:none; padding:4px; font-size:0.8rem;">
+                    <option value="Номио">Номио</option>
+                    <option value="Мягаа">Мягаа</option>
+                    <option value="Лхагва">Лхагва</option>
+                </select>
             </td>
-            <td><input type="number" class="entry-qty" value="1" min="1"></td>
+            <td>
+                <div style="display:flex; flex-direction:column; gap:4px;">
+                     <div style="display:flex; align-items:center; gap:4px;">
+                         <span style="font-size:0.8rem; width:45px;">Ширхэг:</span>
+                         <input type="number" class="entry-qty" value="1" min="0" style="width: 60px; padding:2px;">
+                     </div>
+                     <div class="pkg-row" style="display:none; align-items:center; gap:4px; color:var(--accent-color);">
+                         <span class="pkg-label" style="font-size:0.8rem; font-weight:bold; width:45px;">Багц:</span>
+                         <input type="number" class="entry-pkg-qty" value="0" min="0" style="width: 60px; padding:2px;">
+                     </div>
+                </div>
+            </td>
             <td>
                 <input type="text" class="entry-price" readonly value="0₮">
                 <select class="entry-price-select form-control" style="display:none; padding: 4px; height: 32px;">
@@ -385,7 +409,7 @@ function renderDailyLog(container) {
             <td><input type="text" class="entry-total" readonly value="0₮"></td>
             <td><button class="remove-row" style="background:none; border:none; color:var(--danger); cursor:pointer;"><i data-lucide="trash-2"></i></button></td>
         `;
-        
+
         const itemInput = tr.querySelector('.entry-item-input');
         const itemHidden = tr.querySelector('.entry-item-val');
         const dropdownList = tr.querySelector('.custom-dropdown-list');
@@ -399,10 +423,27 @@ function renderDailyLog(container) {
             const paymentSelect = tr.querySelector('.entry-payment');
             const typeSelect = tr.querySelector('.entry-type');
             const priceSelect = tr.querySelector('.entry-price-select');
+
+            const pkgRow = tr.querySelector('.pkg-row');
+            const pkgLabel = tr.querySelector('.pkg-label');
+            const pkgInput = tr.querySelector('.entry-pkg-qty');
+
             if (item) {
+                if (item.id === 'yargui') {
+                    pkgRow.style.display = 'flex';
+                    pkgLabel.innerText = 'Багц(2ш):';
+                } else if (item.id === 'meal-set' || item.id === 'tea-set') {
+                    pkgRow.style.display = 'flex';
+                    pkgLabel.innerText = 'Хос(2+2):';
+                } else {
+                    pkgRow.style.display = 'none';
+                    pkgInput.value = 0;
+                }
+
                 const qty = parseInt(qtyInput.value) || 0;
+                const pkgQty = parseInt(pkgInput.value) || 0;
                 itemInput.value = item.name;
-                
+
                 let currentItemPrice = item.price;
                 if (item.id === 'book') {
                     priceInput.style.display = 'none';
@@ -414,22 +455,39 @@ function renderDailyLog(container) {
                     priceInput.value = item.price.toLocaleString() + '₮';
                 }
 
-                if (typeSelect.value === 'sale' && (paymentSelect && (paymentSelect.value === 'director' || paymentSelect.value === 'gift'))) {
-                    totalInput.value = '0₮';
-                    tr.setAttribute('data-base-total', '0');
-                    tr.setAttribute('data-eff-price', '0');
+                let baseTotal = 0;
+                let isFree = typeSelect.value === 'sale' && (paymentSelect && (paymentSelect.value === 'director' || paymentSelect.value === 'gift'));
+
+                if (isFree) {
+                    baseTotal = 0;
                 } else {
-                    totalInput.value = (currentItemPrice * qty).toLocaleString() + '₮';
-                    tr.setAttribute('data-base-total', (currentItemPrice * qty).toString());
-                    tr.setAttribute('data-eff-price', currentItemPrice.toString());
+                    if (item.id === 'yargui') {
+                        const pkgPrice = (item.price * 2) - (item.price * 0.2);
+                        baseTotal = (currentItemPrice * qty) + (pkgPrice * pkgQty);
+                    } else if (item.id === 'meal-set') {
+                        const teaPrice = state.items.find(i => i.id === 'tea-set')?.price || 0;
+                        const pkgPrice = (item.price * 2) + (teaPrice * 2) - (teaPrice * 0.5);
+                        baseTotal = (currentItemPrice * qty) + (pkgPrice * pkgQty);
+                    } else if (item.id === 'tea-set') {
+                        const mealPrice = state.items.find(i => i.id === 'meal-set')?.price || 0;
+                        const pkgPrice = (mealPrice * 2) + (item.price * 2) - (item.price * 0.5);
+                        baseTotal = (currentItemPrice * qty) + (pkgPrice * pkgQty);
+                    } else {
+                        baseTotal = currentItemPrice * qty;
+                    }
                 }
+
+                totalInput.value = baseTotal.toLocaleString() + '₮';
+                tr.setAttribute('data-base-total', baseTotal.toString());
             } else {
+                if (pkgRow) pkgRow.style.display = 'none';
+                if (pkgInput) pkgInput.value = 0;
+
                 priceInput.style.display = 'block';
                 priceSelect.style.display = 'none';
                 priceInput.value = '0₮';
                 totalInput.value = '0₮';
                 tr.setAttribute('data-base-total', '0');
-                tr.setAttribute('data-eff-price', '0');
             }
             if (window.updatePromotions) window.updatePromotions();
         }
@@ -451,13 +509,14 @@ function renderDailyLog(container) {
         }
 
         itemInput.addEventListener('focus', openDropdown);
-        
+
 
         itemInput.addEventListener('blur', () => {
             setTimeout(closeDropdown, 200);
         });
 
         qtyInput.addEventListener('input', updateRowCalculations);
+        tr.querySelector('.entry-pkg-qty').addEventListener('input', updateRowCalculations);
         tr.querySelector('.entry-price-select').addEventListener('change', updateRowCalculations);
 
 
@@ -466,7 +525,7 @@ function renderDailyLog(container) {
                 selectItem(item.getAttribute('data-id'));
             });
         });
-        
+
 
         itemInput.addEventListener('keydown', (e) => {
             const key = e.key;
@@ -500,11 +559,19 @@ function renderDailyLog(container) {
 
         typeSelect.addEventListener('change', () => {
             paymentSelect.disabled = typeSelect.value !== 'sale';
-            if (paymentSelect.disabled) paymentSelect.value = "";
+            if (paymentSelect.disabled) {
+                paymentSelect.value = "";
+                tr.querySelector('.entry-employee').style.display = 'none';
+            } else {
+                tr.querySelector('.entry-employee').style.display = paymentSelect.value === 'employee' ? 'block' : 'none';
+            }
             updateRowCalculations();
         });
 
-        paymentSelect.addEventListener('change', updateRowCalculations);
+        paymentSelect.addEventListener('change', () => {
+            tr.querySelector('.entry-employee').style.display = paymentSelect.value === 'employee' ? 'block' : 'none';
+            updateRowCalculations();
+        });
 
         tbody.appendChild(tr);
         lucide.createIcons();
@@ -517,128 +584,13 @@ function renderDailyLog(container) {
         });
     }
 
+    // Only refreshes row totals; gift section is independent
     window.updatePromotions = () => {
-        let yarguiQty = 0;
-        let mealSetQty = 0;
-        let teaSetQty = 0;
-        const saleRows = [];
-        
         Array.from(tbody.children).forEach(tr => {
-            const itemId = tr.querySelector('.entry-item-val').value;
-            const type = tr.querySelector('.entry-type').value;
-            const pm = tr.querySelector('.entry-payment').value;
-            const qty = parseInt(tr.querySelector('.entry-qty').value) || 0;
-            if (type === 'sale' && pm !== 'director' && pm !== 'gift' && itemId) {
-                saleRows.push(tr);
-                if (itemId === 'yargui') yarguiQty += qty;
-                if (itemId === 'meal-set') mealSetQty += qty;
-                if (itemId === 'tea-set') teaSetQty += qty;
-            }
+            const baseTotal = parseInt(tr.getAttribute('data-base-total')) || 0;
+            tr.querySelector('.entry-total').value = baseTotal.toLocaleString() + '₮';
+            tr.setAttribute('data-final-total', baseTotal);
         });
-
-        const messages = [];
-        
-        Array.from(tbody.children).forEach(tr => {
-            const base = parseInt(tr.getAttribute('data-base-total')) || 0;
-            const effPrice = parseInt(tr.getAttribute('data-eff-price')) || 0;
-            tr.querySelector('.entry-total').value = base.toLocaleString() + '₮';
-            tr.setAttribute('data-final-total', base);
-            tr.setAttribute('data-final-price', effPrice);
-        });
-
-        if (yarguiQty >= 2) {
-            const discountedCount = Math.floor(yarguiQty / 2);
-            const yarguiItem = state.items.find(i => i.id === 'yargui');
-            if (yarguiItem) {
-                const discountValue = discountedCount * (yarguiItem.price * 0.2);
-                messages.push(`- Яргуй 20% хямдрал: -${discountValue.toLocaleString()}₮`);
-                
-                let remainingDiscount = discountValue;
-                for (let tr of saleRows) {
-                    if (tr.querySelector('.entry-item-val').value === 'yargui' && remainingDiscount > 0) {
-                        let base = parseInt(tr.getAttribute('data-final-total')) || 0;
-                        if (base >= remainingDiscount) {
-                            base -= remainingDiscount;
-                            remainingDiscount = 0;
-                        } else {
-                            remainingDiscount -= base;
-                            base = 0;
-                        }
-                        tr.querySelector('.entry-total').value = base.toLocaleString() + '₮';
-                        tr.setAttribute('data-final-total', base);
-                        const qty = parseInt(tr.querySelector('.entry-qty').value) || 1;
-                        tr.setAttribute('data-final-price', Math.floor(base / qty));
-                    }
-                }
-            }
-        }
-
-        if (mealSetQty >= 2 && teaSetQty >= 2) {
-            const discountedCount = Math.min(Math.floor(mealSetQty / 2), Math.floor(teaSetQty / 2));
-            const teaSetItem = state.items.find(i => i.id === 'tea-set');
-            if (teaSetItem && discountedCount > 0) {
-                const discountValue = discountedCount * (teaSetItem.price * 0.5);
-                messages.push(`- ${discountedCount} Цайны сэт 50% хямдрал: -${discountValue.toLocaleString()}₮`);
-                
-                let remainingDiscount = discountValue;
-                for (let tr of saleRows) {
-                    if (tr.querySelector('.entry-item-val').value === 'tea-set' && remainingDiscount > 0) {
-                        let base = parseInt(tr.getAttribute('data-final-total')) || 0;
-                        if (base >= remainingDiscount) {
-                            base -= remainingDiscount;
-                            remainingDiscount = 0;
-                        } else {
-                            remainingDiscount -= base;
-                            base = 0;
-                        }
-                        tr.querySelector('.entry-total').value = base.toLocaleString() + '₮';
-                        tr.setAttribute('data-final-total', base);
-                        const qty = parseInt(tr.querySelector('.entry-qty').value) || 1;
-                        tr.setAttribute('data-final-price', Math.floor(base / qty));
-                    }
-                }
-            }
-        }
-
-        const promoBox = document.getElementById('promotions-container');
-        const promoMsg = document.getElementById('promo-messages');
-        const giftSection = document.getElementById('gift-selection');
-        const giftTitle = document.getElementById('promo-gift-title');
-        const giftCandle = document.getElementById('gift-qty-candle');
-        const giftThermos = document.getElementById('gift-qty-thermos');
-
-        const totalGiftEligible = yarguiQty + mealSetQty + teaSetQty;
-        const maxGifts = totalGiftEligible;
-        
-        promoMsg.innerHTML = messages.length > 0 ? messages.join('<br>') : '';
-        let hasPromo = messages.length > 0 || maxGifts > 0;
-        promoBox.style.display = hasPromo ? 'block' : 'none';
-
-        if (maxGifts > 0) {
-            giftSection.style.display = 'flex';
-            giftTitle.innerText = `Сонгох боломжтой бэлэг: ${maxGifts} ширхэг`;
-            
-            const currentTotal = (parseInt(giftCandle.value) || 0) + (parseInt(giftThermos.value) || 0);
-            if (currentTotal > maxGifts) {
-                giftCandle.value = 0;
-                giftThermos.value = 0;
-            }
-            
-            [giftCandle, giftThermos].forEach(input => {
-                input.max = maxGifts;
-                input.oninput = () => {
-                   let c = parseInt(giftCandle.value) || 0;
-                   let t = parseInt(giftThermos.value) || 0;
-                   if (c + t > maxGifts) {
-                       input.value = input === giftCandle ? Math.max(0, maxGifts - t) : Math.max(0, maxGifts - c);
-                   }
-                };
-            });
-        } else {
-            giftSection.style.display = 'none';
-            if (giftCandle) giftCandle.value = 0;
-            if (giftThermos) giftThermos.value = 0;
-        }
     };
 
     document.getElementById('add-row-btn').addEventListener('click', createRow);
@@ -649,53 +601,113 @@ function renderDailyLog(container) {
         let error = null;
 
         Array.from(tbody.children).forEach(tr => {
-                    const locationId = tr.querySelector('.entry-loc').value;
-                    const itemId = tr.querySelector('.entry-item-val').value;
-                    const type = tr.querySelector('.entry-type').value;
-                    const paymentMethod = tr.querySelector('.entry-payment').value;
-                    const qty = parseInt(tr.querySelector('.entry-qty').value);
+            const locationId = tr.querySelector('.entry-loc').value;
+            const itemId = tr.querySelector('.entry-item-val').value;
+            const type = tr.querySelector('.entry-type').value;
+            const paymentMethod = tr.querySelector('.entry-payment').value;
+            const employeeName = tr.querySelector('.entry-employee')?.value;
+            const qty = parseInt(tr.querySelector('.entry-qty').value) || 0;
+            const pkgQty = parseInt(tr.querySelector('.entry-pkg-qty')?.value) || 0;
 
-                    if (locationId && itemId && qty > 0) {
-                        const item = state.items.find(i => i.id === itemId);
-                        let finalPrice = parseInt(tr.getAttribute('data-final-price'));
-                        if (isNaN(finalPrice)) finalPrice = item.price;
+            if (locationId && itemId && (qty > 0 || pkgQty > 0)) {
+                const item = state.items.find(i => i.id === itemId);
+                let isFree = type === 'sale' && (paymentMethod === 'director' || paymentMethod === 'gift');
+
+                if (qty > 0) {
+                    let price = isFree ? 0 : item.price;
+                    if (!isFree && item.id === 'book') {
+                        price = parseInt(tr.querySelector('.entry-price-select').value) || price;
+                    }
+
+                    if (type === 'sale') {
+                        const currentStock = state.inventory[locationId][itemId] || 0;
+                        if (currentStock < qty) {
+                            error = `${LOCATIONS.find(l => l.id === locationId).name} дээрх ${item.name} хүрэлцэхгүй! (Үлд: ${currentStock})`;
+                        }
+                    }
+                    txsToSave.push({
+                        id: Date.now() + Math.random(),
+                        date, locationId, itemId, type,
+                        paymentMethod: type === 'sale' ? paymentMethod : null,
+                        employeeName: (type === 'sale' && paymentMethod === 'employee') ? employeeName : null,
+                        quantity: qty,
+                        price: price
+                    });
+                }
+
+                if (pkgQty > 0) {
+                    if (itemId === 'yargui') {
+                        const requiredQty = pkgQty * 2;
+                        if (type === 'sale') {
+                            const currentStock = state.inventory[locationId]['yargui'] || 0;
+                            const alreadyPushed = (qty > 0) ? qty : 0;
+                            if (currentStock < requiredQty + alreadyPushed) {
+                                error = `Үлдэгдэл хүрэлцэхгүй (Яргуй)!`;
+                            }
+                        }
+                        const pkgPrice = isFree ? 0 : Math.floor(((item.price * 2) - (item.price * 0.2)) / 2);
+                        txsToSave.push({
+                            id: Date.now() + Math.random(),
+                            date, locationId, itemId: 'yargui', type,
+                            paymentMethod: type === 'sale' ? paymentMethod : null,
+                            employeeName: (type === 'sale' && paymentMethod === 'employee') ? employeeName : null,
+                            quantity: requiredQty,
+                            price: pkgPrice
+                        });
+                    } else if (itemId === 'meal-set' || itemId === 'tea-set') {
+                        const requiredQty = pkgQty * 2;
+                        const mealPriceFull = isFree ? 0 : state.items.find(i => i.id === 'meal-set').price;
+                        const teaPriceFull = isFree ? 0 : state.items.find(i => i.id === 'tea-set').price;
 
                         if (type === 'sale') {
-                            const currentStock = state.inventory[locationId][itemId] || 0;
-                            if (currentStock < qty) {
-                                const locName = LOCATIONS.find(l => l.id === locationId).name;
-                                error = `${locName} дээрх ${item.name} барааны үлдэгдэл хүрэлцэхгүй байна! (Үлдэгдэл: ${currentStock})`;
-                            }
+                            const mStock = state.inventory[locationId]['meal-set'] || 0;
+                            const tStock = state.inventory[locationId]['tea-set'] || 0;
+                            const mAlready = (itemId === 'meal-set' && qty > 0) ? qty : 0;
+                            const tAlready = (itemId === 'tea-set' && qty > 0) ? qty : 0;
+                            if (mStock < requiredQty + mAlready) error = `Үлдэгдэл хүрэлцэхгүй (Хоолны сэт)!`;
+                            if (tStock < requiredQty + tAlready) error = `Үлдэгдэл хүрэлцэхгүй (Цайны сэт)!`;
                         }
 
                         txsToSave.push({
-                            id: Date.now() + txsToSave.length,
-                            date,
-                            locationId,
-                            itemId,
-                            type,
+                            id: Date.now() + Math.random(),
+                            date, locationId, itemId: 'meal-set', type,
                             paymentMethod: type === 'sale' ? paymentMethod : null,
-                            quantity: qty,
-                            price: finalPrice
+                            employeeName: (type === 'sale' && paymentMethod === 'employee') ? employeeName : null,
+                            quantity: requiredQty,
+                            price: mealPriceFull
+                        });
+                        txsToSave.push({
+                            id: Date.now() + Math.random(),
+                            date, locationId, itemId: 'tea-set', type,
+                            paymentMethod: type === 'sale' ? paymentMethod : null,
+                            employeeName: (type === 'sale' && paymentMethod === 'employee') ? employeeName : null,
+                            quantity: requiredQty,
+                            price: isFree ? 0 : Math.floor(teaPriceFull * 0.75)
                         });
                     }
+                }
+            }
         });
 
-        const giftCandle = parseInt(document.getElementById('gift-qty-candle').value) || 0;
-        const giftThermos = parseInt(document.getElementById('gift-qty-thermos').value) || 0;
-        
-        if ((giftCandle + giftThermos) > 0 && txsToSave.length > 0) {
+        const giftCandle = parseInt(document.getElementById('gift-qty-candle')?.value) || 0;
+        const giftThermos = parseInt(document.getElementById('gift-qty-thermos')?.value) || 0;
+        const giftBook = parseInt(document.getElementById('gift-qty-book')?.value) || 0;
+        // Gift location is chosen independently in the standalone gift section
+        const giftLocationId = document.getElementById('gift-location')?.value || (txsToSave[0]?.locationId) || LOCATIONS[0].id;
+
+        if (giftCandle + giftThermos + giftBook > 0) {
             const gifts = [];
-            if (giftCandle > 0) gifts.push({id: 'candle', qty: giftCandle});
-            if (giftThermos > 0) gifts.push({id: 'thermos', qty: giftThermos});
-            
-            const locationId = txsToSave[0].locationId;
-            
+            if (giftCandle > 0) gifts.push({ id: 'candle', qty: giftCandle });
+            if (giftThermos > 0) gifts.push({ id: 'thermos', qty: giftThermos });
+            if (giftBook > 0) gifts.push({ id: 'book', qty: giftBook });
+
+            const locationId = giftLocationId;
+
             for (let g of gifts) {
                 const currentStock = state.inventory[locationId][g.id] || 0;
                 if (currentStock < g.qty) {
                     const locName = LOCATIONS.find(l => l.id === locationId).name;
-                    error = `${locName} дээрх бэлэгний (${state.items.find(i=>i.id===g.id).name}) үлдэгдэл хүрэлцэхгүй байна! (Үлдэгдэл: ${currentStock})`;
+                    error = `${locName} дээрх бэлэгний (${state.items.find(i => i.id === g.id).name}) үлдэгдэл хүрэлцэхгүй байна! (Үлдэгдэл: ${currentStock})`;
                     break;
                 } else {
                     txsToSave.push({
@@ -842,7 +854,7 @@ function renderTransfer(container) {
             id: Date.now(),
             date,
             locationId: fromId,
-
+            toLocationId: toId,
             itemId,
             type: 'transfer',
             quantity: qty,
@@ -883,22 +895,22 @@ function renderHistory(container) {
         
         <div class="animate-fade-in">
             ${sortedDates.map(date => {
-                const txs = groups[date];
-                const daySales = txs.filter(t => t.type === 'sale' && t.paymentMethod !== 'director').reduce((sum, t) => sum + (t.price * t.quantity), 0);
-                const dayRestock = txs.filter(t => t.type === 'restock').reduce((sum, t) => sum + (t.price * t.quantity), 0);
+        const txs = groups[date];
+        const daySales = txs.filter(t => t.type === 'sale' && t.paymentMethod !== 'director').reduce((sum, t) => sum + (t.price * t.quantity), 0);
+        const dayRestock = txs.filter(t => t.type === 'restock').reduce((sum, t) => sum + (t.price * t.quantity), 0);
 
-                return `
+        return `
                     <div class="history-date-group">
                         <div class="history-date-header">
                             <div>
                                 <h3><i data-lucide="calendar" style="width: 16px; margin-right: 8px;"></i> ${date}</h3>
                                 <div class="daily-summaries" style="margin-top: 8px; font-size: 0.85rem;">
                                     ${PAYMENT_METHODS.map(pm => {
-                                        if (pm.id === 'director' || pm.id === 'gift') return '';
-                                        const pmTotal = txs.filter(t => t.type === 'sale' && t.paymentMethod === pm.id).reduce((sum, t) => sum + (t.price * t.quantity), 0);
-                                        if (pmTotal === 0) return '';
-                                        return `<span style="margin-right: 12px; color: var(--text-secondary);">${pm.name}: <strong>${pmTotal.toLocaleString()}₮</strong></span>`;
-                                    }).join('')}
+            if (pm.id === 'director' || pm.id === 'gift') return '';
+            const pmTotal = txs.filter(t => t.type === 'sale' && t.paymentMethod === pm.id).reduce((sum, t) => sum + (t.price * t.quantity), 0);
+            if (pmTotal === 0) return '';
+            return `<span style="margin-right: 12px; color: var(--text-secondary);">${pm.name}: <strong>${pmTotal.toLocaleString()}₮</strong></span>`;
+        }).join('')}
                                 </div>
                             </div>
                             <div class="daily-summaries">
@@ -926,35 +938,35 @@ function renderHistory(container) {
                                 </thead>
                                 <tbody>
                                     ${txs.slice().reverse().map(tx => {
-                                        const item = state.items.find(i => i.id === tx.itemId);
-                                        const locName = LOCATIONS.find(l => l.id === tx.locationId)?.name;
-                                        
-                                        let fromText = "-";
-                                        let toText = "-";
-                                        let typeText = "";
-                                        let typeColor = "";
+            const item = state.items.find(i => i.id === tx.itemId);
+            const locName = LOCATIONS.find(l => l.id === tx.locationId)?.name;
 
-                                        if (tx.type === 'sale') {
-                                            fromText = locName;
-                                            toText = '<span style="color:var(--text-secondary)">Гадагшаа</span>';
-                                            typeText = 'Борлуулалт';
-                                            typeColor = 'var(--danger)';
-                                        } else if (tx.type === 'restock') {
-                                            fromText = '<span style="color:var(--text-secondary)">Гаднаас</span>';
-                                            toText = locName;
-                                            typeText = 'Бараа нэмэх';
-                                            typeColor = 'var(--success)';
-                                        } else if (tx.type === 'transfer') {
-                                            const toLocName = LOCATIONS.find(l => l.id === tx.toLocationId)?.name;
-                                            fromText = locName;
-                                            toText = toLocName;
-                                            typeText = 'Зөөлт';
-                                            typeColor = 'var(--accent-color)';
-                                        }
-                                        
-                                        const paymentName = tx.paymentMethod ? PAYMENT_METHODS.find(pm => pm.id === tx.paymentMethod)?.name : '-';
-                                        
-                                        return `
+            let fromText = "-";
+            let toText = "-";
+            let typeText = "";
+            let typeColor = "";
+
+            if (tx.type === 'sale') {
+                fromText = locName;
+                toText = '<span style="color:var(--text-secondary)">Гадагшаа</span>';
+                typeText = 'Борлуулалт';
+                typeColor = 'var(--danger)';
+            } else if (tx.type === 'restock') {
+                fromText = '<span style="color:var(--text-secondary)">Гаднаас</span>';
+                toText = locName;
+                typeText = 'Бараа нэмэх';
+                typeColor = 'var(--success)';
+            } else if (tx.type === 'transfer') {
+                const toLocName = LOCATIONS.find(l => l.id === tx.toLocationId)?.name;
+                fromText = locName;
+                toText = toLocName;
+                typeText = 'Зөөлт';
+                typeColor = 'var(--accent-color)';
+            }
+
+            const paymentName = tx.paymentMethod ? (tx.paymentMethod === 'employee' ? 'Ажилчин - ' + (tx.employeeName || '') : PAYMENT_METHODS.find(pm => pm.id === tx.paymentMethod)?.name) : '-';
+
+            return `
                                             <tr>
                                                 <td><strong>${item?.name}</strong></td>
                                                 <td>${fromText}</td>
@@ -963,16 +975,28 @@ function renderHistory(container) {
                                                 <td>${tx.quantity}</td>
                                                 <td>${(tx.paymentMethod === 'director' || tx.paymentMethod === 'gift') ? '0₮' : tx.price.toLocaleString() + '₮'}</td>
                                                 <td>${(tx.paymentMethod === 'director' || tx.paymentMethod === 'gift') ? '0₮' : (tx.price * tx.quantity).toLocaleString() + '₮'}</td>
-                                                <td style="color: ${typeColor}; font-weight: 500;">${typeText}</td>
+                                                <td style="color: ${typeColor}; font-weight: 500;">
+                                                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                                                        <span>${typeText}</span>
+                                                        <div style="display:flex; gap: 4px;">
+                                                            <button class="btn-secondary" onclick="window.editTransaction(${tx.id})" style="border:none; padding: 4px; color: var(--text-primary); background:transparent; cursor:pointer;" title="Засах">
+                                                                <i data-lucide="edit-2" style="width: 16px;"></i>
+                                                            </button>
+                                                            <button class="btn-secondary" onclick="window.deleteTransaction(${tx.id})" style="border:none; padding: 4px; color: var(--danger); background:transparent; cursor:pointer;" title="Устгах">
+                                                                <i data-lucide="trash-2" style="width: 16px;"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </td>
                                             </tr>
                                         `;
-                                    }).join('')}
+        }).join('')}
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 `;
-            }).join('')}
+    }).join('')}
             ${state.transactions.length === 0 ? '<div class="card" style="text-align: center; padding: 48px; color: var(--text-secondary);">Мэдээлэл байхгүй байна</div>' : ''}
         </div>
     `;
@@ -1025,19 +1049,19 @@ function renderItemsManagement(container) {
         e.preventDefault();
         const name = document.getElementById('new-item-name').value.trim();
         const price = parseInt(document.getElementById('new-item-price').value);
-        
+
         if (name && price >= 0) {
             const id = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') + '-' + Date.now();
             const newItem = { id, name, price };
-            
+
             state.items.push(newItem);
-            
+
 
             LOCATIONS.forEach(loc => {
                 if (!state.inventory[loc.id]) state.inventory[loc.id] = {};
                 state.inventory[loc.id][id] = 0;
             });
-            
+
             saveState();
             renderItemsManagement(container);
             lucide.createIcons();
@@ -1048,15 +1072,15 @@ function renderItemsManagement(container) {
         btn.addEventListener('click', () => {
             const id = btn.getAttribute('data-id');
             const item = state.items.find(i => i.id === id);
-            
+
 
             let hasStock = false;
             LOCATIONS.forEach(loc => {
                 if (state.inventory[loc.id][id] > 0) hasStock = true;
             });
-            
+
             const hasTx = state.transactions.some(tx => tx.itemId === id);
-            
+
             if (hasStock || hasTx) {
                 if (!confirm(`АНХААРУУЛГА: "${item.name}" бараа гүйлгээнд орсон эсвэл үлдэгдэлтэй байна. Устгахдаа итгэлтэй байна уу?`)) {
                     return;
@@ -1077,3 +1101,122 @@ function renderItemsManagement(container) {
 
     lucide.createIcons();
 }
+
+window.deleteTransaction = (id) => {
+    if (!confirm('Энэ гүйлгээг устгах уу? Барааны үлдэгдэл буцаж өөрчлөгдөнө.')) return;
+    const txIndex = state.transactions.findIndex(t => t.id === id);
+    if (txIndex === -1) return;
+    const tx = state.transactions[txIndex];
+
+    if (tx.type === 'sale') {
+        state.inventory[tx.locationId][tx.itemId] += tx.quantity;
+    } else if (tx.type === 'restock') {
+        state.inventory[tx.locationId][tx.itemId] -= tx.quantity;
+    } else if (tx.type === 'transfer') {
+        state.inventory[tx.locationId][tx.itemId] += tx.quantity;
+        state.inventory[tx.toLocationId][tx.itemId] -= tx.quantity;
+    }
+
+    state.transactions.splice(txIndex, 1);
+    saveState();
+    renderPage('history');
+};
+
+window.editTransaction = (id) => {
+    const txIndex = state.transactions.findIndex(t => t.id === id);
+    if (txIndex === -1) return;
+    const tx = state.transactions[txIndex];
+
+    const container = document.getElementById('modal-container');
+    container.innerHTML = `
+        <div class="modal-content animate-fade-in" style="background:var(--bg-color); padding: 24px; border-radius: 8px; max-width: 400px; width:100%; box-shadow: 0 4px 12px rgba(0,0,0,0.5); margin: auto;">
+            <h3 style="margin-top:0; margin-bottom:16px;">Гүйлгээ засварлах</h3>
+            <div class="form-group">
+                <label>Огноо</label>
+                <input type="date" id="edit-tx-date" class="form-control" value="${tx.date}">
+            </div>
+            <div class="form-group">
+                <label>Тоо ширхэг</label>
+                <input type="number" id="edit-tx-qty" class="form-control" value="${tx.quantity}" min="1">
+            </div>
+            ${tx.type !== 'transfer' ? `
+            <div class="form-group">
+                <label>Нэгж үнэ</label>
+                <input type="number" id="edit-tx-price" class="form-control" value="${tx.price}" min="0">
+            </div>
+            ` : ''}
+            ${tx.type === 'sale' ? `
+            <div class="form-group">
+                <label>Төлбөр</label>
+                <select id="edit-tx-payment" class="form-control" onchange="document.getElementById('edit-tx-employee').style.display = this.value === 'employee' ? 'block' : 'none'">
+                    ${PAYMENT_METHODS.map(pm => `<option value="${pm.id}" ${tx.paymentMethod === pm.id ? 'selected' : ''}>${pm.name}</option>`).join('')}
+                </select>
+                <select id="edit-tx-employee" class="form-control" style="display:${tx.paymentMethod === 'employee' ? 'block' : 'none'}; margin-top:8px;">
+                    ${['Номио', 'Мягаа', 'Лхагва'].map(emp => `<option value="${emp}" ${tx.employeeName === emp ? 'selected' : ''}>${emp}</option>`).join('')}
+                </select>
+            </div>
+            ` : ''}
+            <div style="display:flex; justify-content:flex-end; gap: 8px; margin-top:20px;">
+                <button class="btn btn-secondary" onclick="document.getElementById('modal-container').classList.add('modal-hidden'); document.getElementById('modal-container').style.display='none';" style="width:auto;">Цуцлах</button>
+                <button class="btn" onclick="saveEditedTx(${id})" style="width:auto;">Хадгалах</button>
+            </div>
+        </div>
+    `;
+    container.classList.remove('modal-hidden');
+    container.style.display = 'flex';
+    container.style.alignItems = 'center';
+    container.style.justifyContent = 'center';
+    container.style.position = 'fixed';
+    container.style.top = '0';
+    container.style.left = '0';
+    container.style.width = '100vw';
+    container.style.height = '100vh';
+    container.style.background = 'rgba(0,0,0,0.5)';
+    container.style.zIndex = '9999';
+};
+
+window.saveEditedTx = (id) => {
+    const tx = state.transactions.find(t => t.id === id);
+    if (!tx) return;
+
+    const newDate = document.getElementById('edit-tx-date').value;
+    const newQty = parseInt(document.getElementById('edit-tx-qty').value);
+    const newPriceEl = document.getElementById('edit-tx-price');
+    const newPaymentEl = document.getElementById('edit-tx-payment');
+
+    if (isNaN(newQty) || newQty <= 0) {
+        alert('Буруу тоо байна!');
+        return;
+    }
+
+    const qtyDiff = newQty - tx.quantity;
+    if (qtyDiff > 0) {
+        if (tx.type === 'sale' && state.inventory[tx.locationId][tx.itemId] < qtyDiff) {
+            alert('Үлдэгдэл хүрэлцэхгүй!');
+            return;
+        } else if (tx.type === 'transfer' && state.inventory[tx.locationId][tx.itemId] < qtyDiff) {
+            alert('Үлдэгдэл хүрэлцэхгүй!');
+            return;
+        }
+    }
+
+    if (tx.type === 'sale') {
+        state.inventory[tx.locationId][tx.itemId] -= qtyDiff;
+    } else if (tx.type === 'restock') {
+        state.inventory[tx.locationId][tx.itemId] += qtyDiff;
+    } else if (tx.type === 'transfer') {
+        state.inventory[tx.locationId][tx.itemId] -= qtyDiff;
+        state.inventory[tx.toLocationId][tx.itemId] += qtyDiff;
+    }
+
+    tx.date = newDate;
+    tx.quantity = newQty;
+    if (newPriceEl) tx.price = parseInt(newPriceEl.value) || 0;
+    if (newPaymentEl) tx.paymentMethod = newPaymentEl.value;
+
+    saveState();
+    const container = document.getElementById('modal-container');
+    container.classList.add('modal-hidden');
+    container.style.display = 'none';
+    renderPage('history');
+};
