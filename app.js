@@ -6,6 +6,9 @@ const LOCATIONS = [
 const PAYMENT_METHODS = [
     { id: 'pos', name: 'POS' },
     { id: 'bank', name: 'Дансаар' },
+    { id: 'qpay', name: 'Qpay' },
+    { id: 'pocket', name: 'Pocket' },
+    { id: 'cash', name: 'Бэлэн' },
     { id: 'director', name: 'Захирал' },
     { id: 'gift', name: 'Бэлэг' }
 ];
