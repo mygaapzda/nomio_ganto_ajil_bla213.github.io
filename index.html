@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="mn" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CFA Level II Mock Exam Platform | 88 Questions (22 Vignettes)</title>
+  <meta name="description" content="88 асуулттай, 22 хэсгээс бүрдсэн CFA Level II загвар шалгалт, дадлага ажиллах болон алдаагаа шинжлэх интерактив платформ.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Header Bar -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand-group">
+        <div class="logo-badge">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1 class="brand-title">CFA Level II Mock Exam</h1>
+          <span class="brand-subtitle">88 Questions &bull; 22 Vignettes &bull; Complete Explanations</span>
+        </div>
+      </div>
+
+      <!-- Mode & Status in Header -->
+      <div class="header-center" id="headerCenter">
+        <div class="mode-pill-group">
+          <button class="mode-btn active" id="btnModeExam" data-mode="exam" title="Хугацаатай шалгалтын горим">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Exam Mode
+          </button>
+          <button class="mode-btn" id="btnModePractice" data-mode="practice" title="Хариултаа шууд шалгаж суралцах горим">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            Practice Mode
+          </button>
+        </div>
+
+        <div class="timer-badge" id="timerBadge" title="Шалгалтын цаг">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span class="timer-val" id="timerDisplay">02:12:00</span>
+          <button class="timer-control-btn" id="btnToggleTimer" title="Түр зогсоох / Үргэлжлүүлэх">
+            <svg id="timerIconPause" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Right Controls -->
+      <div class="header-actions">
+        <button class="nav-drawer-toggle" id="btnToggleDrawer" title="Асуултуудын газрын зураг (88 асуулт)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <span class="btn-text">Grid (<span id="answeredCountBadge">0</span>/88)</span>
+        </button>
+
+        <button class="btn btn-primary btn-submit-exam" id="btnSubmitExam" title="Шалгалтыг дуусгаж дүн харах">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>Finish &amp; Score</span>
+        </button>
+
+        <button class="theme-toggle" id="btnToggleTheme" title="Dark / Light theme солих">
+          <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Progress Track Bar -->
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progressBarFill" style="width: 0%;"></div>
+    </div>
+  </header>
+
+  <!-- Main App Container -->
+  <main class="app-main" id="appMain">
+
+    <!-- VIEW 1: EXAM / PRACTICE VIEW -->
+    <div class="view-pane view-exam active" id="viewExam">
+      
+      <!-- Section Switcher Bar -->
+      <div class="section-nav-bar">
+        <button class="sec-nav-btn prev-sec-btn" id="btnPrevSection" title="Өмнөх хэсэг">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+          <span>Prev Case</span>
+        </button>
+
+        <div class="sec-dropdown-wrap">
+          <select id="sectionSelectDropdown" class="section-select-control" aria-label="Сонгосон кейс хэсэг"></select>
+        </div>
+
+        <div class="sec-meta-badge">
+          <span id="sessionTagBadge" class="session-badge">Morning Session</span>
+          <span id="sectionProgressTag" class="section-counter-badge">Case 1 of 22</span>
+        </div>
+
+        <button class="sec-nav-btn next-sec-btn" id="btnNextSection" title="Дараагийн хэсэг">
+          <span>Next Case</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+
+      <!-- Split Layout Area -->
+      <div class="split-layout-container" id="splitContainer">
+        
+        <!-- Left Side: Vignette & Exhibits -->
+        <section class="vignette-pane" id="vignettePane" aria-label="Case Scenario Context">
+          <div class="pane-inner">
+            <div class="vignette-header">
+              <div class="vignette-title-row">
+                <span class="vignette-chip" id="vignetteChip">Case Scenario 1</span>
+                <h2 class="vignette-title" id="vignetteTitle">Andre Bento Case Scenario</h2>
+              </div>
+              <p class="vignette-hint">Энэхүү кейсийн өгөгдөл, хүснэгт болон үзүүлэлтүүдийг ашиглан баруун талын 4 асуултад хариулна уу.</p>
+            </div>
+            
+            <div class="vignette-body" id="vignetteContent">
+              <!-- Rendered Vignette Paragraphs, Exhibits, Tables dynamically -->
+            </div>
+          </div>
+        </section>
+
+        <!-- Right Side: 4 Questions for current Vignette -->
+        <section class="questions-pane" id="questionsPane" aria-label="Item Set Questions">
+          <div class="pane-inner">
+            <div class="questions-list-header">
+              <h3 class="ql-title">Questions in this Vignette (4 Items)</h3>
+              <span class="ql-subtitle" id="vignetteQRange">Questions #1 – #4</span>
+            </div>
+
+            <div class="questions-container" id="questionsContainer">
+              <!-- 4 Questions dynamically rendered here -->
+            </div>
+
+            <div class="section-bottom-actions">
+              <button class="btn btn-outline" id="btnBottomPrevSec">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                Өмнөх хэсэг
+              </button>
+              <button class="btn btn-primary" id="btnBottomNextSec">
+                Дараагийн хэсэг
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+    <!-- VIEW 2: COMPREHENSIVE RESULTS & MISTAKE REVIEW VIEW ("Алдаа шинжлэх") -->
+    <div class="view-pane view-results" id="viewResults">
+      <div class="results-container">
+        
+        <!-- Score Hero Card -->
+        <div class="results-hero-card">
+          <div class="hero-main-content">
+            <div class="score-circle-wrapper">
+              <svg class="score-ring" width="160" height="160" viewBox="0 0 120 120">
+                <circle class="score-ring-bg" cx="60" cy="60" r="50" fill="none" stroke-width="10"/>
+                <circle class="score-ring-progress" id="scoreRingProgress" cx="60" cy="60" r="50" fill="none" stroke-width="10" stroke-dasharray="314.159" stroke-dashoffset="314.159"/>
+              </svg>
+              <div class="score-circle-inner">
+                <span class="score-pct-value" id="scorePctValue">0%</span>
+                <span class="score-label-sub" id="scoreFractionLabel">0 / 88</span>
+              </div>
+            </div>
+
+            <div class="hero-details">
+              <div class="hero-badge-tag" id="scoreStatusBadge">Completed</div>
+              <h2 class="hero-headline" id="scoreHeadline">Шалгалтын Дүн ба Алдааны Шинжилгээ</h2>
+              <p class="hero-description" id="scoreSummaryDesc">Та нийт 88 асуултаас тодорхой тооны асуултад зөв хариуллаа. Доорх хэсгээс юун дээр алдсанаа нарийвчлан судалж, тайлбаруудыг уншина уу.</p>
+              
+              <div class="hero-stats-row">
+                <div class="stat-pill stat-correct">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  <span>Зөв: <strong id="statCorrectCount">0</strong></span>
+                </div>
+                <div class="stat-pill stat-incorrect">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  <span>Буруу / Алдсан: <strong id="statIncorrectCount">0</strong></span>
+                </div>
+                <div class="stat-pill stat-unanswered">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  <span>Хариулаагүй: <strong id="statUnansweredCount">0</strong></span>
+                </div>
+                <div class="stat-pill stat-time">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <span>Зарцуулсан цаг: <strong id="statTimeSpent">00:00</strong></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Action Buttons on Result Card -->
+          <div class="hero-actions-bar">
+            <button class="btn btn-danger-soft" id="btnRetakeIncorrect">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+              <span>Зөвхөн алдсан асуултуудаа дахин ажиллах (<span id="retakeCountLabel">0</span>)</span>
+            </button>
+            <button class="btn btn-outline" id="btnRetakeAll">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              <span>Бүх шалгалтыг дахин эхлүүлэх</span>
+            </button>
+            <button class="btn btn-secondary" id="btnPrintReport">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              <span>Тайлан хэвлэх / PDF</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Topic Breakdown Section -->
+        <div class="results-topic-section">
+          <div class="section-title-wrap">
+            <h3 class="section-title">Сэдэв тус бүрийн амжилт (CFA Level II Topic Breakdown)</h3>
+            <p class="section-subtitle">Аль сэдэв дээр илүү сайн ажиллаж, аль сэдэв дээр давтах шаардлагатай байгааг харна уу.</p>
+          </div>
+
+          <div class="topic-grid" id="topicGridContainer">
+            <!-- Topic performance cards dynamically rendered here -->
+          </div>
+        </div>
+
+        <!-- Mistake Review Section ("Юу нь дээр алдсан") -->
+        <div class="results-mistake-section" id="mistakeSection">
+          <div class="mistake-header-wrap">
+            <div class="section-title-wrap">
+              <h3 class="section-title">Асуултуудын нарийвчилсан дүн ба тайлбар (Detailed Mistake Review)</h3>
+              <p class="section-subtitle">Асуулт бүр дээр сонгосон хариулт, зөв хариулт болон сонголт тус бүрийн алдаа, бодолтын тайлбарыг эндээс уншина уу.</p>
+            </div>
+
+            <!-- Review Filter Pills -->
+            <div class="review-filter-group">
+              <button class="filter-pill active" data-filter="incorrect" id="filterBtnIncorrect">
+                <span class="dot red-dot"></span>
+                Зөвхөн алдсан (<span id="filterCountIncorrect">0</span>)
+              </button>
+              <button class="filter-pill" data-filter="all" id="filterBtnAll">
+                Бүх 88 асуулт
+              </button>
+              <button class="filter-pill" data-filter="correct" id="filterBtnCorrect">
+                <span class="dot green-dot"></span>
+                Зөв хариулсан (<span id="filterCountCorrect">0</span>)
+              </button>
+              <button class="filter-pill" data-filter="flagged" id="filterBtnFlagged">
+                <span class="dot yellow-dot"></span>
+                Тэмдэглэсэн (<span id="filterCountFlagged">0</span>)
+              </button>
+            </div>
+          </div>
+
+          <!-- Review Question Cards List -->
+          <div class="review-questions-list" id="reviewQuestionsList">
+            <!-- Dynamically populated review questions with full explanation breakdown -->
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Slide-out Drawer: All 88 Questions Grid Map -->
+  <aside class="nav-drawer" id="navDrawer" aria-label="Question Navigation Drawer">
+    <div class="drawer-header">
+      <div class="drawer-title-group">
+        <h3 class="drawer-title">Exam Overview (88 Questions)</h3>
+        <span class="drawer-subtitle">22 Vignettes &bull; 4 Questions each</span>
+      </div>
+      <button class="btn-close-drawer" id="btnCloseDrawer" title="Хаах">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <!-- Legend -->
+    <div class="drawer-legend">
+      <div class="legend-item"><span class="legend-dot status-answered"></span> Хариулсан</div>
+      <div class="legend-item"><span class="legend-dot status-unanswered"></span> Хариулаагүй</div>
+      <div class="legend-item"><span class="legend-dot status-flagged"></span> Тэмдэглэсэн</div>
+      <div class="legend-item"><span class="legend-dot status-current"></span> Одоо байгаа</div>
+    </div>
+
+    <!-- 22 Sections Grid List -->
+    <div class="drawer-sections-list" id="drawerSectionsList">
+      <!-- 22 Case sections rendered here -->
+    </div>
+  </aside>
+
+  <!-- Drawer Backdrop -->
+  <div class="drawer-backdrop" id="drawerBackdrop"></div>
+
+  <!-- Image Lightbox Modal -->
+  <div class="lightbox-modal" id="lightboxModal">
+    <button class="lightbox-close" id="btnCloseLightbox" title="Хаах">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="lightbox-content">
+      <img id="lightboxImg" src="" alt="Exhibit Full View">
+      <p class="lightbox-caption" id="lightboxCaption">Exhibit Image</p>
+    </div>
+  </div>
+
+  <!-- Submit Confirmation Modal -->
+  <div class="confirm-modal-overlay" id="confirmSubmitModal">
+    <div class="confirm-modal-box">
+      <div class="modal-icon-wrap">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <h3 class="modal-title">Шалгалтыг дуусгах уу?</h3>
+      <p class="modal-text" id="confirmModalText">Та нийт 88 асуултаас 88-д нь хариулсан байна.</p>
+      
+      <div class="modal-summary-box">
+        <div class="ms-item"><span class="ms-label">Нийт асуулт:</span><strong class="ms-val">88</strong></div>
+        <div class="ms-item"><span class="ms-label">Хариулсан:</span><strong class="ms-val text-primary" id="msAnswered">0</strong></div>
+        <div class="ms-item"><span class="ms-label">Хариулаагүй:</span><strong class="ms-val text-danger" id="msUnanswered">88</strong></div>
+        <div class="ms-item"><span class="ms-label">Тэмдэглэсэн:</span><strong class="ms-val text-warning" id="msFlagged">0</strong></div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-outline" id="btnCancelSubmit">Үргэлжлүүлэн ажиллах</button>
+        <button class="btn btn-primary" id="btnConfirmSubmit">Тийм, дуусгаж дүн харах</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
